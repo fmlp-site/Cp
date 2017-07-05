@@ -1,0 +1,125 @@
+DEFINE CLASS tarefa as Custom
+
+	ID = 0
+	Check = 0
+	Descricao = ''
+	Data = {}
+	Hora = ''
+	Prioridade = ''
+
+	FUNCTION setCheck(tnCheck as Number)
+		this.Check = tnCheck
+	ENDFUNC
+	
+	FUNCTION setDescricao(tcDescricao as Character)
+		this.Descricao = tcDescricao
+	ENDFUNC
+	
+	FUNCTION setData(tdData as Date)
+		this.Data = tdData
+	ENDFUNC
+	
+	FUNCTION setHora(tcHora as Character)
+		this.Hora = tcHora
+	ENDFUNC
+	
+	FUNCTION setPrioridade(tcPrioridade as Character)
+		this.Prioridade = tcPrioridade
+	ENDFUNC			
+	
+	FUNCTION ValidarHora (tcHora)
+		
+		LOCAL llRetorno
+		llRetorno = .T.
+	
+		DO CASE
+			CASE EMPTY(LEFT(tcHora,2)) AND EMPTY(RIGHT(tcHora,2)) && Só valida se não for hora vazia.
+				llRetorno = .T.
+				
+			CASE EMPTY(LEFT(tcHora,1)) OR EMPTY(SUBSTR(tcHora,2,1)) OR EMPTY(SUBSTR(tcHora,4,1)) OR EMPTY(RIGHT(tcHora,1)) && Alguma casa vazia, ex: x :yz
+				llRetorno = .F.
+				
+			CASE VAL(LEFT(tcHora,1)) > 2 && Ex: 3x:yz
+				llRetorno = .F.
+				
+			CASE VAL(LEFT(tcHora,1)) = 2 AND VAL(SUBSTR(tcHora,2,1)) > 3 && Ex: 26:xy
+				llRetorno = .F.
+				
+			CASE VAL(SUBSTR(tcHora,4,1)) > 5 && Ex: xy:79
+				llRetorno = .F.
+				
+		ENDCASE
+		
+		IF !llRetorno
+			MESSAGEBOX('Hora inválida!')
+		ENDIF
+			
+		
+		RETURN llRetorno
+		
+	ENDFUNC
+	
+	FUNCTION ValidarNovaTarefa()
+	
+		LOCAL llRetorno
+		llRetorno = .T.
+		
+		IF (EMPTY(this.Descricao))
+			llRetorno = .F.
+		ENDIF
+		
+		RETURN llRetorno
+	
+	ENDFUNC
+	
+	FUNCTION Salvar()
+	
+		THIS.Descricao = ALLTRIM(UPPER(LEFT(THIS.Descricao,1)) + RIGHT(THIS.Descricao,LEN(THIS.Descricao)-1))
+	
+		INSERT INTO Tarefas (Check, Descricao, Data, Hora, Prioridade);
+			VALUES (this.Check, this.Descricao, this.Data, this.Hora, this.Prioridade)
+	ENDFUNC
+
+	FUNCTION ValidarData(tdData, tlDataFutura)
+		
+		LOCAL llRetorno
+		llRetorno = .T.
+
+		IF !EMPTY(tdData) AND tdData < DATE()
+			
+			IF tlDataFutura
+				llRetorno = (MESSAGEBOX('Data inferior a data atual, deseja incluir?',4) = 6)
+			ELSE
+				MESSAGEBOX('Data inferior a data atual!')
+				llRetorno = .F.
+			ENDIF
+			
+		ENDIF
+		
+		RETURN llRetorno
+	ENDFUNC
+	
+	FUNCTION GravarLayoutVisualizacao(toGrid)
+
+		SELECT LayoutVisualizacaoTarefas
+		ZAP IN LayoutVisualizacaoTarefas
+		INSERT INTO LayoutVisualizacaoTarefas (c1,c2,c3,c4,c5,c6) ;
+		VALUES(	toGrid.colDel.Width,	toGrid.colCheck.Width,;
+				toGrid.colTarefa.Width, toGrid.colData.Width,;
+				toGrid.colHora.Width, 	toGrid.colPrioridade.Width)
+
+	ENDFUNC
+	
+	FUNCTION ConfigurarLarguraDasColunas(toGrid)
+		IF RECCOUNT('LayoutVisualizacaoTarefas') > 0
+			toGrid.colDel.Width = LayoutVisualizacaoTarefas.c1
+			toGrid.colCheck.Width = LayoutVisualizacaoTarefas.c2
+			toGrid.colTarefa.Width = LayoutVisualizacaoTarefas.c3
+			toGrid.colData.Width = LayoutVisualizacaoTarefas.c4
+			toGrid.colHora.Width = LayoutVisualizacaoTarefas.c5
+			toGrid.colPrioridade.Width = LayoutVisualizacaoTarefas.c6
+		ENDIF	
+	
+	ENDFUNC	
+
+ENDDEFINE
